@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FLY MIND 2.0 — the fly saga flagship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --amber:#ffb300; --amber2:#ff8f00; --cyan:#37e6ff; --bg:#04050a; --panel:rgba(8,12,20,.84);
+    --txt:#e8eef5; --dim:#8a97a8; --mag:#ff6bd6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+    font-family:'Space Mono',monospace;}
+  #scene{position:fixed;inset:0;touch-action:none}
+  .panel{position:fixed;background:var(--panel);border:1px solid rgba(255,179,0,.25);
+    backdrop-filter:blur(8px);padding:13px 15px;border-radius:4px;z-index:10}
+  #title{top:16px;left:16px;max-width:440px}
+  #title h1{font-size:25px;letter-spacing:3px;color:var(--amber);font-weight:700}
+  #title h1 span{color:var(--cyan)}
+  #title h1 em{font-style:normal;color:var(--mag);font-size:13px;letter-spacing:6px;vertical-align:super}
+  #title p{margin-top:6px;font-size:11px;line-height:1.55;color:var(--dim)}
+  #title .big{color:var(--txt)}
+  #title a{color:var(--cyan);text-decoration:none}
+  #title a:hover{text-decoration:underline}
+  #hud{top:16px;right:16px;text-align:right;font-size:11px;line-height:1.7;color:var(--dim);min-width:200px}
+  #hud .v{color:var(--cyan);font-size:13px}
+  #hud #behavior{color:var(--amber);font-size:13px;letter-spacing:2px}
+  #stim{bottom:16px;left:16px;display:flex;flex-direction:column;gap:7px;max-width:255px}
+  #stim .lbl{font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:2px}
+  .sbtn{cursor:pointer;border:1px solid rgba(55,230,255,.4);background:rgba(55,230,255,.06);
+    color:var(--cyan);font-family:inherit;font-size:12px;letter-spacing:1.5px;padding:8px 11px;
+    border-radius:3px;text-align:left;transition:all .15s}
+  .sbtn:hover{background:rgba(55,230,255,.18);color:#fff}
+  .sbtn.hot{background:rgba(255,179,0,.18);border-color:var(--amber);color:var(--amber)}
+  .sbtn small{display:block;color:var(--dim);font-size:9.5px;letter-spacing:.5px;margin-top:2px}
+  .row{display:flex;gap:7px}
+  .row .sbtn{flex:1}
+  #saga{bottom:16px;right:16px;max-width:330px;font-size:10.5px;line-height:1.6;color:var(--dim)}
+  #saga h2{font-size:11px;color:var(--amber);letter-spacing:2px;margin-bottom:5px}
+  #saga a{color:var(--cyan);text-decoration:none}
+  #saga a:hover{text-decoration:underline}
+  #saga .ch{display:flex;gap:8px;align-items:baseline;padding:2px 0}
+  #saga .n{color:var(--mag);min-width:34px;font-size:9.5px;letter-spacing:1px}
+  #saga .here{color:var(--amber)}
+  #saga .tog{cursor:pointer;user-select:none}
+  #saga .body{margin-top:4px}
+  #saga .sci{display:none;margin-top:8px;border-top:1px dashed rgba(138,151,168,.3);padding-top:8px}
+  #saga.open .sci{display:block}
+  #loading{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .6s}
+  #loading h1{color:var(--amber);letter-spacing:6px;font-size:22px}
+  #loading h1 span{color:var(--cyan)}
+  #bar{width:280px;height:3px;background:#1a2230}
+  #bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+  #loadmsg{font-size:10.5px;color:var(--dim);letter-spacing:1px}
+  #toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;
+    color:var(--amber);font-size:13px;letter-spacing:3px;pointer-events:none;opacity:0;transition:opacity .3s;
+    text-shadow:0 0 18px rgba(255,179,0,.6)}
+  @media (max-width:760px){
+    #title{max-width:62vw}#title h1{font-size:16px}#title p{font-size:9.5px}
+    #saga{display:none}
+    #hud{font-size:10px;min-width:140px;padding:10px}
+    #stim{max-width:210px}
+    .sbtn{font-size:10.5px;padding:7px 9px}
+  }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<div id="loading">
+  <h1>FLY&nbsp;<span>MIND</span>&nbsp;2.0</h1>
+  <div id="bar"><i></i></div>
+  <div id="loadmsg">unpacking the connectome…</div>
+</div>
+
+<div class="panel" id="title">
+  <h1>FLY<span>MIND</span> <em>2.0</em></h1>
+  <p><span class="big">65,000 real neurons. 220,000 real synapses. One file.</span><br>
+  On Sept 3, 2026, Google &amp; HHMI Janelia published the
+  <a href="https://research.google/blog/a-connectomics-milestone-mapping-the-complete-male-fruit-fly-brain/" target="_blank">complete male fly brain map</a> —
+  166,000 neurons, 125 million synapses, the largest ever. Its raw data lives behind research
+  tooling, so 2.0 runs the sister brain: the complete female wiring
+  (<a href="https://flywire.ai/" target="_blank">FlyWire</a> FAFB v783). Every point is a real neuron. Stimulate it.</p>
+</div>
+
+<div class="panel" id="hud">
+  <div>ACTIVE NEURONS <span class="v" id="h-active">0</span></div>
+  <div>SPIKES / SEC <span class="v" id="h-spikes">0</span></div>
+  <div>STIMULUS <span class="v" id="h-stim">none</span></div>
+  <div>SOUND <span class="v" id="h-sound">off</span></div>
+  <div>VIRTUAL FLY <span id="behavior">IDLE</span></div>
+</div>
+
+<div class="panel" id="stim">
+  <div class="lbl">OPTOGENETIC STIMULATION</div>
+  <button class="sbtn" data-p="vision">▸ VISION<small>visual projection neurons — show it the world</small></button>
+  <button class="sbtn" data-p="optic">▸ OPTIC LOBES<small>half the brain is eyes</small></button>
+  <button class="sbtn" data-p="sensory">▸ SENSORY NERVES<small>touch, taste, smell, hearing</small></button>
+  <button class="sbtn" data-p="descend">▸ ESCAPE / WALK<small>descending neurons — brain → body</small></button>
+  <button class="sbtn" data-p="motor">▸ MOTOR OUTPUT<small>the neurons that move the legs</small></button>
+  <div class="row">
+    <button class="sbtn" data-p="dopa">▸ DOPAMINE<small>want something</small></button>
+    <button class="sbtn" data-p="sero">▸ SEROTONIN<small>feel something</small></button>
+  </div>
+  <div class="row">
+    <button class="sbtn" data-p="seizure">⚡ SEIZURE<small>everything, everywhere</small></button>
+    <button class="sbtn" data-p="reset">✕ RESET<small>let it fall silent</small></button>
+  </div>
+  <div class="lbl" style="margin-top:5px">CLICK THE BRAIN TO POKE IT · DRAG TO ORBIT</div>
+</div>
+
+<div class="panel" id="saga">
+  <div class="tog"><h2>▼ THE FLY SAGA — CHAPTER V</h2></div>
+  <div class="body">
+    <div class="ch"><span class="n">I</span><a href="https://jacobegarcia.github.io/fruit-fly-hell/" target="_blank">FRUIT FLY HELL</a></div>
+    <div class="ch"><span class="n">II</span><a href="https://jacobegarcia.github.io/fruit-fly-purgatory/" target="_blank">FRUIT FLY PURGATORY</a></div>
+    <div class="ch"><span class="n">III</span><a href="https://jacobegarcia.github.io/fruit-fly-heaven/" target="_blank">FRUIT FLY HEAVEN</a></div>
+    <div class="ch"><span class="n">IV</span><a href="https://jacobegarcia.github.io/fly-mind/" target="_blank">FLY MIND</a></div>
+    <div class="ch"><span class="n here">V</span><span class="here">FLY MIND 2.0 — you are here</span></div>
+    <div class="sci">
+      Coloring is cell class: cyan optic · amber central · green sensory · violet visual projection ·
+      red descending · white motor. Spikes obey the sign of the real synapse — GABA and glutamate
+      inhibit, acetylcholine excites. The virtual fly's behavior is read off its real descending
+      and motor neurons.<br><br>
+      Data: FlyWire FAFB v783 (Dorkenwald et al., <i>Nature</i> 2024, CC BY-NC 4.0), the complete
+      female adult brain — 139,255 neurons, ~50M synapses — sampled to a 65,000-neuron live core
+      embedded in this single file. The male CNS map: Takemura/Januszewski et al., <i>Cell</i> 2026.
+      Built by Jacob × Instinct, Sept 2026.
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const bar = document.querySelector('#bar i');
+const loadmsg = document.getElementById('loadmsg');
+const setP = (p, m) => { bar.style.width = (p*100).toFixed(0)+'%'; if(m) loadmsg.textContent = m; };
+
+// ---------- decode the embedded connectome ----------
+setP(.08, 'decoding 65,000 neurons…');
+const raw = (await Promise.all(['connectome.p1.txt','connectome.p2.txt','connectome.p3.txt','connectome.p4.txt'].map(p=>fetch(p).then(r=>r.text()).then(t=>t.trim())))).join('');
+const META = {"n": 65000, "e": 220000};
+function b64bytes(s){
+  const bin = atob(s); const n = bin.length;
+  const b = new Uint8Array(n);
+  for (let i = 0; i < n; i++) b[i] = bin.charCodeAt(i);
+  return b;
+}
+const parts = raw.split('|');
+const N = META.n, E = META.e;
+const positions = new Float32Array(b64bytes(parts[0]).buffer);
+const attrs     = b64bytes(parts[1]);
+const E_pre16   = new Uint16Array(b64bytes(parts[2]).buffer);
+const E_post16  = new Uint16Array(b64bytes(parts[3]).buffer);
+const E_w8      = new Int8Array(b64bytes(parts[4]).buffer);
+
+setP(.3, 'wiring synapses…');
+// CSR out-adjacency
+const outStart = new Uint32Array(N+1);
+for (let e = 0; e < E; e++) outStart[E_pre16[e]+1]++;
+for (let i = 0; i < N; i++) outStart[i+1] += outStart[i];
+const csrPost = new Uint32Array(E), csrW = new Float32Array(E);
+{
+  const cursor = outStart.slice(0, N);
+  for (let e = 0; e < E; e++) {
+    const p = E_pre16[e], o = cursor[p]++;
+    csrPost[o] = E_post16[e]; csrW[o] = E_w8[e] / 320;
+  }
+  for (let i = 0; i < N; i++) {
+    const deg = outStart[i+1] - outStart[i];
+    const f = 1 / (1 + deg * 0.06);
+    for (let o = outStart[i]; o < outStart[i+1]; o++) csrW[o] *= f;
+  }
+}
+
+// class & transmitter indices for stimulation presets
+const byClass = Array.from({length:10}, () => []);
+const byNt = Array.from({length:6}, () => []);
+for (let i = 0; i < N; i++) { byClass[attrs[3*i]].push(i); byNt[attrs[3*i+1]].push(i); }
+const sample = (arr, k) => {
+  const out = new Uint32Array(Math.min(k, arr.length));
+  const seen = new Set();
+  for (let j = 0; j < out.length; j++) {
+    let x; do { x = arr[(Math.random()*arr.length)|0]; } while (seen.has(x));
+    seen.add(x); out[j] = x;
+  }
+  return out;
+};
+const PRESETS = {
+  vision:  { list: sample(byClass[3], 420), amp: .55, label: 'VISION' },
+  optic:   { list: sample(byClass[0], 500), amp: .42, label: 'OPTIC LOBES' },
+  sensory: { list: sample(byClass[2], 380), amp: .55, label: 'SENSORY' },
+  descend: { list: sample(byClass[5], 500), amp: .8,  label: 'ESCAPE / WALK' },
+  motor:   { list: sample(byClass[8], 103), amp: 1.1, label: 'MOTOR OUTPUT' },
+  dopa:    { list: sample(byNt[4], 200),    amp: .9,  label: 'DOPAMINE' },
+  sero:    { list: sample(byNt[3], 200),    amp: .9,  label: 'SEROTONIN' },
+  seizure: { list: sample(Array.from({length:N},(_,i)=>i), 2600), amp: .5, label: 'SEIZURE' },
+};
+const descendIdx = sample(byClass[5], 400), motorIdx = sample(byClass[8], 100);
+
+setP(.55, 'growing a brain…');
+// ---------- three.js scene ----------
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04050a, 0.0015);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 4000);
+camera.position.set(0, 70, 400);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.getElementById('scene').appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .06;
+controls.autoRotate = true; controls.autoRotateSpeed = .35;
+controls.minDistance = 60; controls.maxDistance = 1200;
+
+const CLASS_COLORS = [
+  [0.22,0.90,1.00], // 0 optic — cyan
+  [1.00,0.70,0.00], // 1 central — amber
+  [0.49,1.00,0.42], // 2 sensory — green
+  [0.71,0.55,1.00], // 3 visual_projection — violet
+  [1.00,0.42,0.84], // 4 ascending — pink
+  [1.00,0.36,0.36], // 5 descending — red
+  [0.42,1.00,0.80], // 6 sensory_ascending — teal
+  [0.55,0.71,1.00], // 7 visual_centrifugal — blue
+  [1.00,1.00,1.00], // 8 motor — white
+  [1.00,0.84,0.42], // 9 endocrine — gold
+];
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const aClass = new Float32Array(N), aAct = new Float32Array(N);
+for (let i = 0; i < N; i++) aClass[i] = attrs[3*i];
+geo.setAttribute('aClass', new THREE.BufferAttribute(aClass, 1));
+const actAttr = new THREE.BufferAttribute(aAct, 1);
+actAttr.setUsage(THREE.DynamicDrawUsage);
+geo.setAttribute('aAct', actAttr);
+const pmat = new THREE.ShaderMaterial({
+  uniforms: { uSize: { value: 2.6 } },
+  vertexShader: `
+    attribute float aClass; attribute float aAct;
+    varying vec3 vColor; varying float vAct;
+    uniform float uSize;
+    vec3 pal(float c){
+      ${CLASS_COLORS.map((c,i)=>`if(c<${i}.5)return vec3(${c[0]},${c[1]},${c[2]});`).join('')}
+      return vec3(1.0);
+    }
+    void main(){
+      vAct = aAct; vColor = pal(aClass);
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = uSize * (1.0 + aAct*2.6) * (320.0 / -mv.z);
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: `
+    varying vec3 vColor; varying float vAct;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5;
+      float d = length(c);
+      float a = smoothstep(0.5, 0.12, d);
+      float g = clamp(vAct, 0.0, 1.6);
+      vec3 col = vColor * (0.5 + 2.0*g) + vec3(1.0) * pow(g, 2.0) * 0.55;
+      gl_FragColor = vec4(col, a * (0.34 + 0.66*min(1.0, g + 0.12)));
+    }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+scene.add(new THREE.Points(geo, pmat));
+
+// synapse lines (top-weight subset), light up when the presynaptic neuron fires
+const RL = Math.min(42000, E);
+const edgeOrder = Array.from({length:E},(_,i)=>i).sort((a,b)=>Math.abs(E_w8[b])-Math.abs(E_w8[a])).slice(0,RL);
+const lpos = new Float32Array(RL*6), lact = new Float32Array(RL*2);
+const linePre = new Uint32Array(RL);
+edgeOrder.forEach((e, k) => {
+  const p = E_pre16[e], q = E_post16[e];
+  lpos.set([positions[3*p],positions[3*p+1],positions[3*p+2],
+            positions[3*q],positions[3*q+1],positions[3*q+2]], k*6);
+  linePre[k] = p;
+});
+const lgeo = new THREE.BufferGeometry();
+lgeo.setAttribute('position', new THREE.BufferAttribute(lpos, 3));
+const lActAttr = new THREE.BufferAttribute(lact, 1);
+lActAttr.setUsage(THREE.DynamicDrawUsage);
+lgeo.setAttribute('aLA', lActAttr);
+const lmat = new THREE.ShaderMaterial({
+  vertexShader: `
+    attribute float aLA; varying float vA;
+    void main(){ vA = aLA; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    varying float vA;
+    void main(){
+      vec3 col = mix(vec3(0.10,0.16,0.24), vec3(1.0,0.75,0.25), vA);
+      gl_FragColor = vec4(col, 0.05 + vA*0.55);
+    }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+scene.add(new THREE.LineSegments(lgeo, lmat));
+
+setP(.8, 'first heartbeat…');
+// ---------- simulation ----------
+const act = new Float32Array(N), next = new Float32Array(N);
+let spikesThisFrame = 0, spikeRate = 0, lastSpikes = [];
+let stim = null, stimEnd = 0;
+const LEAK = 0.90, THRESH = 1.0;
+
+function simStep(){
+  next.fill(0);
+  // ambient life
+  for (let k = 0; k < 36; k++) next[(Math.random()*N)|0] += 0.05;
+  if (stim && performance.now() < stimEnd) {
+    const L = stim.list;
+    for (let j = 0; j < L.length; j++) next[L[j]] += stim.amp * (0.4 + 0.6*Math.random());
+  }
+  spikesThisFrame = 0;
+  for (let i = 0; i < N; i++) {
+    let v = act[i] * LEAK + next[i];
+    if (v >= THRESH) {
+      v = -0.25; // spike + reset
+      spikesThisFrame++;
+      aAct[i] = 1.5;
+      for (let o = outStart[i]; o < outStart[i+1]; o++) next[csrPost[o]] += csrW[o];
+    }
+    act[i] = v;
+  }
+}
+
+// ---------- sound ----------
+let audioCtx = null, soundOn = false;
+const CLASS_FREQ = [523, 392, 587, 659, 440, 330, 494, 554, 880, 698];
+function blip(freq, gain){
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + 0.24);
+}
+let lastBlip = 0;
+function sonify(){
+  if (!soundOn || !audioCtx) return;
+  const now = performance.now();
+  if (now - lastBlip < 90 || lastSpikes.length === 0) return;
+  lastBlip = now;
+  const cls = attrs[3*lastSpikes[(Math.random()*lastSpikes.length)|0]];
+  blip(CLASS_FREQ[cls] * (Math.random() < .3 ? 2 : 1), Math.min(0.05, 0.008 + spikeRate/90000));
+}
+document.getElementById('h-sound').parentElement.style.cursor = 'pointer';
+document.getElementById('h-sound').parentElement.title = 'click to toggle sound';
+document.getElementById('h-sound').parentElement.addEventListener('click', () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  soundOn = !soundOn;
+  document.getElementById('h-sound').textContent = soundOn ? 'on' : 'off';
+  if (soundOn) blip(523, 0.05);
+});
+
+// ---------- UI ----------
+const toast = document.getElementById('toast');
+let toastT = null;
+function showToast(msg){
+  toast.textContent = msg; toast.style.opacity = 1;
+  clearTimeout(toastT); toastT = setTimeout(() => toast.style.opacity = 0, 1600);
+}
+document.querySelectorAll('.sbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = btn.dataset.p;
+    document.querySelectorAll('.sbtn').forEach(b => b.classList.remove('hot'));
+    if (p === 'reset') {
+      act.fill(0); stim = null;
+      document.getElementById('h-stim').textContent = 'none';
+      showToast('SILENCE');
+      return;
+    }
+    btn.classList.add('hot');
+    stim = PRESETS[p]; stimEnd = performance.now() + 3000;
+    document.getElementById('h-stim').textContent = stim.label;
+    showToast('STIMULATING ' + stim.label);
+  });
+});
+document.querySelector('#saga .tog').addEventListener('click', () =>
+  document.getElementById('saga').classList.toggle('open'));
+
+// poke: nearest neuron to click ray
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let downPos = null;
+renderer.domElement.addEventListener('pointerdown', e => downPos = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downPos) return;
+  const moved = Math.hypot(e.clientX-downPos[0], e.clientY-downPos[1]);
+  downPos = null;
+  if (moved > 6) return;
+  ptr.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+  ray.setFromCamera(ptr, camera);
+  const ro = ray.ray.origin, rd = ray.ray.direction;
+  let best = -1, bestD = 14;
+  for (let i = 0; i < N; i++) {
+    const dx = positions[3*i]-ro.x, dy = positions[3*i+1]-ro.y, dz = positions[3*i+2]-ro.z;
+    const t = dx*rd.x + dy*rd.y + dz*rd.z;
+    if (t < 0) continue;
+    const px = ro.x+rd.x*t-positions[3*i], py = ro.y+rd.y*t-positions[3*i+1], pz = ro.z+rd.z*t-positions[3*i+2];
+    const d = Math.sqrt(px*px+py*py+pz*pz);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  if (best < 0) return;
+  const bx = positions[3*best], by = positions[3*best+1], bz = positions[3*best+2];
+  const dist = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const dx = positions[3*i]-bx, dy = positions[3*i+1]-by, dz = positions[3*i+2]-bz;
+    dist[i] = dx*dx+dy*dy+dz*dz;
+  }
+  const idx = Array.from({length:N},(_,i)=>i).sort((a,b)=>dist[a]-dist[b]).slice(0,240);
+  stim = { list: Uint32Array.from(idx), amp: 1.0, label: 'POKE' };
+  stimEnd = performance.now() + 1600;
+  document.getElementById('h-stim').textContent = 'POKE';
+  showToast('POKE');
+});
+
+// ---------- behavior readout ----------
+const behEl = document.getElementById('behavior');
+function behavior(){
+  let d = 0, m = 0;
+  for (let j = 0; j < descendIdx.length; j++) d += act[descendIdx[j]];
+  for (let j = 0; j < motorIdx.length; j++) m += act[motorIdx[j]];
+  d /= descendIdx.length; m /= Math.max(1, motorIdx.length);
+  let g = 0; for (let i = 0; i < N; i += 97) g += act[i]; g /= (N/97);
+  if (g > 0.55) return 'SEIZURE ⚡';
+  const drive = d*2 + m*3;
+  if (drive < 0.02) return 'IDLE';
+  if (drive < 0.09) return 'TWITCHING';
+  if (drive < 0.22) return 'WALKING';
+  if (drive < 0.5)  return 'RUNNING';
+  return 'ESCAPE RESPONSE';
+}
+
+// ---------- main loop ----------
+const hActive = document.getElementById('h-active'), hSpikes = document.getElementById('h-spikes');
+let lastT = performance.now(), frame = 0;
+function loop(){
+  requestAnimationFrame(loop);
+  const now = performance.now();
+  const dt = Math.min(50, now - lastT); lastT = now;
+  // sim substeps: ~2 per frame at 60fps
+  lastSpikes = [];
+  for (let s = 0; s < 2; s++) {
+    simStep();
+    if (spikesThisFrame > 0) {
+      // remember a few spikers for sonification + line lighting
+      let found = 0;
+      for (let i = 0; i < N && found < 40; i++) if (aAct[i] > 1.4) { lastSpikes.push(i); found++; }
+    }
+  }
+  spikeRate = spikeRate*0.92 + (spikesThisFrame * (1000/Math.max(dt,1)) / 2) * 0.08;
+  // decay visuals
+  for (let i = 0; i < N; i++) if (aAct[i] > 0.01) aAct[i] *= 0.93; else aAct[i] = 0;
+  // spiked neurons light their outgoing rendered lines
+  for (let k = 0; k < RL; k++) {
+    if (lact[2*k] > 0.02) { lact[2*k] *= 0.90; lact[2*k+1] = lact[2*k]; }
+    else { lact[2*k] = 0; lact[2*k+1] = 0; }
+    if (aAct[linePre[k]] > 1.2) { lact[2*k] = 1; lact[2*k+1] = 1; }
+  }
+  actAttr.needsUpdate = true;
+  lActAttr.needsUpdate = true;
+  sonify();
+  if ((frame++ & 15) === 0) {
+    let act_n = 0;
+    for (let i = 0; i < N; i += 13) if (act[i] > 0.25) act_n++;
+    hActive.textContent = (act_n*13).toLocaleString();
+    hSpikes.textContent = Math.round(spikeRate).toLocaleString();
+    behEl.textContent = behavior();
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+setP(1, 'alive.');
+setTimeout(() => {
+  document.getElementById('loading').style.opacity = 0;
+  setTimeout(() => document.getElementById('loading').remove(), 700);
+}, 350);
+showToast('THE BRAIN IS AWAKE');
+loop();
+</script>
+</body>
+</html>
